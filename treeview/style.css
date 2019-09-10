@@ -1,0 +1,29 @@
+body {
+  font-family: "Helvetica Neue", Helvetica, sans-serif;
+  margin: 1em auto 0em auto;
+  width: 100%;
+  text-align: center;
+}
+
+.background {
+  stroke: black;
+  stroke-width: 2px;
+  fill: white;
+}
+
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 3px;
+}
+
+.node text {
+  font: 12px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
+}
