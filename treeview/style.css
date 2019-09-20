@@ -12,14 +12,26 @@ body {
 }
 
 
-.node circle {
+#nodecircle {
   fill: #fff;
   stroke: steelblue;
   stroke-width: 3px;
 }
 
-.node text {
+#words {
   font: 12px sans-serif;
+}
+
+#minus {
+  fill: darkorange;
+  stroke: tomato;
+  stroke-width: .25px;
+}
+
+#plus {
+  fill: limegreen;
+  stroke: forestgreen;
+  stroke-width: .25px;
 }
 
 .link {
