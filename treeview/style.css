@@ -18,22 +18,6 @@ body {
   stroke-width: 3px;
 }
 
-#words {
-  font: 12px sans-serif;
-}
-
-#minus {
-  fill: darkorange;
-  stroke: tomato;
-  stroke-width: .25px;
-}
-
-#plus {
-  fill: limegreen;
-  stroke: forestgreen;
-  stroke-width: .25px;
-}
-
 .link {
   fill: none;
   stroke: #ccc;

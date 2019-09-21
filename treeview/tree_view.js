@@ -1,3 +1,6 @@
+
+// Code based on https://bl.ocks.org/d3noob/43a860bc0024792f8803bba8ca0d5ecd.
+
 var treeData = {
   title: "render",
   verbose: [
@@ -6,13 +9,13 @@ var treeData = {
   children: [
     {
       title: "filter",
-      verbose: [ 
+      verbose: [
         [ "(b % 2) != (sq %2)" ]
       ],
       children: [
         {
           title: "hash-join",
-          verbose: [ 
+          verbose: [
             [ "full outer", "column6 = sq", ],
             [ "full outer", "column6 = sq more info", "lots", "of", "rows", "here", ],
             [ "full outer", "column6 = sq even more info", "lots", "of", "rows", "here", "even", "more", "stuff" ]
@@ -44,6 +47,22 @@ var treeData = {
   ]
 };
 
+var width = window.innerWidth,
+    height = window.innerHeight;
+
+const hMargin = 30,
+      vMargin = 25;
+
+const fontSize = 13,
+      lineSpacing = fontSize+1;
+
+if (width > 2 * hMargin) {
+  width = width - 2 * hMargin;
+}
+if (height > 2 * vMargin) {
+  height = height - 2 * vMargin;
+}
+
 // setLines sets n.lines to the set of visible lines of text (according to
 // n.verbosity).
 function setLines(n) {
@@ -62,14 +81,14 @@ function setLines(n) {
 }
 
 function setSize(n) {
-  var numLines = n.lines.length 
+  var numLines = n.lines.length
   var numCols = 0
   for (var i = 0; i < numLines; i++) {
     if (numCols < n.lines[i].length) {
       numCols = n.lines[i].length
     }
   }
-  n.size = [numLines * 12 + 30, numCols * 6 + 15];
+  n.size = [numLines * lineSpacing + 30, numCols * 6 + 15];
 }
 
 
@@ -82,20 +101,6 @@ function initTree(n) {
   }
 }
 initTree(treeData)
-
-// Set the dimensions and margins of the diagram
-var width = window.innerWidth,
-    height = window.innerHeight;
-
-var hMargin = 30,
-    vMargin = 25;
-
-if (width > 2 * hMargin) {
-  width = width - 2 * hMargin;
-}
-if (height > 2 * vMargin) {
-  height = height - 2 * vMargin;
-}
 
 // append the svg object to the body of the page
 // appends a "group" element to "svg"
@@ -111,12 +116,10 @@ svg.append("rect")
   .attr("width", "100%")
   .attr("height", "100%")
 
-var svgGroup = svg.append("g")
-  .attr("transform", "translate(" + hMargin + "," + vMargin + ")");
+var svgGroup = svg.append("g");
 
 function zoom() {
-  const currentTransform = d3.event.transform.translate(hMargin, vMargin);
-  //const currentTransform = d3.event.transform;
+  const currentTransform = d3.event.transform;
   svgGroup.attr("transform", currentTransform);
 }
 
@@ -147,7 +150,28 @@ function update(source) {
     // Cannot modify xSize, ySize.
     node.width = node.ySize;
     node.height = node.xSize;
-  })
+  });
+  // We want to center the whole thing on the x axis. Find the bounding box.
+  var minx = 0, maxx = 0;
+  root.each(function(node) {
+    if (minx > node.x) {
+      minx = node.x
+    }
+    if (maxx < node.x + node.width) {
+      maxx = node.x + node.width
+    }
+  });
+  var dx = (width - maxx + minx) / 2;
+  console.log(dx)
+  console.log(minx, maxx)
+  // If the tree is larger than the page, don't let the root get moved out of
+  // the initial view.
+  if (dx > 0) {
+    root.each(function(node) {
+      node.x += dx;
+    });
+  }
+
 
   // Compute the new tree layout. We set them up in reverse so the parent nodes
   // are on top (useful for mouse events when we collapse a subtree).
@@ -196,24 +220,30 @@ function update(source) {
       var gMinus = g.append("g").attr("id", "minusgroup")
         .attr("transform", "translate(" + d.width + "," + d.height + ")");
 
-      var cx = - 18;
+      var cx = - 20;
       var cy = - 6;
 
-      gMinus.append("circle")
-        .attr("id", "minus")
-        .attr("cx", cx)
-        .attr("cy", cy)
-        .attr("r", 5)
+      // An invisible square as a hitbox.
       gMinus.append("rect")
-        .attr("fill", "white")
-        .attr("x", cx-4)
-        .attr("y", cy-1)
-        .attr("width", 8)
-        .attr("height", 2);
+        .attr("opacity", 0)
+        .attr("x", cx-7)
+        .attr("y", cy-7)
+        .attr("width", 14)
+        .attr("height", 14);
+      gMinus.append("rect")
+        .attr("fill", "dodgerblue")
+        .attr("x", cx-5)
+        .attr("y", cy-1.5)
+        .attr("width", 10)
+        .attr("height", 3);
 
       gMinus.on("mouseenter", function () {
         if (d.data.verbosity > 0) {
-          d3.select(this).attr("opacity", plusMinusOpacityHover);
+          d3.select(this)
+            .attr("opacity", plusMinusOpacityHover)
+            .attr("cursor", "pointer");
+        } else {
+          d3.select(this).attr("cursor", "");
         }
       })
       gMinus.on("mouseleave", function () {
@@ -236,28 +266,34 @@ function update(source) {
       var gPlus = g.append("g").attr("id", "plusgroup")
         .attr("transform", "translate(" + d.width + "," + d.height + ")");
 
-      cx = cx + 11
-      gPlus.append("circle")
-        .attr("id", "plus")
-        .attr("cx", cx)
-        .attr("cy", cy)
-        .attr("r", 5)
+      cx = cx + 14
+      // An invisible square as a hitbox.
       gPlus.append("rect")
-        .attr("fill", "white")
-        .attr("x", cx-4)
-        .attr("y", cy-1)
-        .attr("width", 8)
-        .attr("height", 2);
+        .attr("opacity", 0)
+        .attr("x", cx-7)
+        .attr("y", cy-7)
+        .attr("width", 14)
+        .attr("height", 14);
       gPlus.append("rect")
-        .attr("fill", "white")
-        .attr("x", cx-1)
-        .attr("y", cy-4)
-        .attr("width", 2)
-        .attr("height", 8);
+        .attr("fill", "dodgerblue")
+        .attr("x", cx-5)
+        .attr("y", cy-1.5)
+        .attr("width", 10)
+        .attr("height", 3);
+      gPlus.append("rect")
+        .attr("fill", "dodgerblue")
+        .attr("x", cx-1.5)
+        .attr("y", cy-5)
+        .attr("width", 3)
+        .attr("height", 10);
 
       gPlus.on("mouseenter", function () {
         if (d.data.verbosity < d.data.verbose.length) {
-          d3.select(this).attr("opacity", plusMinusOpacityHover);
+          d3.select(this)
+            .attr("opacity", plusMinusOpacityHover)
+            .attr("cursor", "pointer");
+        } else {
+          d3.select(this).attr("cursor", "");
         }
       })
       gPlus.on("mouseleave", function () {
@@ -332,6 +368,11 @@ function update(source) {
       return d.data.lines.map(function(x) {
         return { node: d, text: x };
       });
+    }, function(d) {
+      // The key that identifies the object is the text itself.
+      // That way if the text on a particular line changes between verbosity
+      // levels, the appropriate transitions will take place.
+      return d.text;
     });
 
   sel.enter().append("text")
@@ -344,10 +385,14 @@ function update(source) {
     .on("mousedown", function() { d3.event.stopPropagation(); })
   .merge(sel)
     .text(function(d) { return d.text; })
-    .attr("dy", function(d, i) { return (i + 2.35) +  "em" });
-  
-  sel.exit().remove();
+    .attr("dy", function(d, i) { return 27 + i * lineSpacing; });
 
+  sel.exit().transition()
+    .duration(duration)
+    .style("font-size", 1)
+    .style("fill-opacity", 0)
+    .attr("x", function(d) { return d.node.width/2 })
+    .remove();
 
   // Update the node attributes and style
   nodeUpdate.select("#nodecircle")
@@ -365,7 +410,7 @@ function update(source) {
   nodeUpdate.selectAll("#words")
     .attr("x", function(d) { return d.node.width/2 })
     .style("fill-opacity", 1)
-    .style("font-size", 12);
+    .style("font-size", fontSize);
 
   nodeUpdate.select("#minusgroup")
     .attr("transform", function() {
@@ -408,7 +453,7 @@ function update(source) {
   var linkEnter = link.enter().insert("path", "g")
       .attr("class", "link")
       .attr("d", function(d){
-        return collapsedDiagonal(source)
+        return diagonalEnter(source)
       });
 
   // UPDATE
@@ -423,7 +468,7 @@ function update(source) {
   var linkExit = link.exit().transition()
       .duration(duration)
       .attr("d", function(d) {
-        return collapsedDiagonal(source)
+        return diagonalExit(source)
       })
       .remove();
 
@@ -445,9 +490,14 @@ function update(source) {
     return path(s.x + s.width/2, s.y+10, d.x+d.width/2, d.y+10)
   }
 
-  function collapsedDiagonal(s) {
+  function diagonalEnter(s) {
     return path(s.x0 + s.width/2, s.y0+10, s.x0+s.width/2, s.y0+10)
   }
+
+  function diagonalExit(s) {
+    return path(s.x + s.width/2, s.y+10, s.x+s.width/2, s.y+10)
+  }
+
 
   // Toggle children on click.
   function click(d) {
